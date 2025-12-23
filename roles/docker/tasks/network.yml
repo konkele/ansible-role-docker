@@ -1,0 +1,73 @@
+
+---
+- name: Gather Docker host information
+  community.docker.docker_host_info:
+  register: docker_host_info
+
+- name: Define protected Docker networks
+  set_fact:
+    protected_docker_networks:
+      - bridge
+      - host
+      - none
+
+- name: Set list of required networks from enabled services
+  set_fact:
+    service_networks: >-
+      {{
+        docker_services | dict2items
+        | selectattr('value.enabled','equalto',true)
+        | selectattr('value.networks','defined')
+        | map(attribute='value.networks')
+        | flatten
+        | unique
+      }}
+
+- name: Combine service networks and docker_networks
+  set_fact:
+    all_required_networks: "{{ (service_networks + (docker_networks.keys() | list)) | unique }}"
+
+- name: Separate managed and external networks
+  set_fact:
+    managed_networks: >-
+      {{
+        docker_networks | dict2items
+        | rejectattr('value.external','equalto',true)
+        | map(attribute='key')
+        | list
+      }}
+    external_networks: >-
+      {{
+        docker_networks | dict2items
+        | selectattr('value.external','equalto',true)
+        | map(attribute='key')
+        | list
+      }}
+
+- name: Create required managed Docker networks if missing
+  community.docker.docker_network:
+    name: "{{ item }}"
+    state: present
+    driver: bridge
+  loop: "{{ managed_networks }}"
+  when: item not in ((docker_host_info.networks | default({})).keys() | list)
+
+- name: Ensure external networks exist
+  community.docker.docker_network:
+    name: "{{ item }}"
+    state: present
+    driver: bridge
+  loop: "{{ external_networks }}"
+
+- name: Remove unused managed Docker networks
+  community.docker.docker_network:
+    name: "{{ item }}"
+    state: absent
+  loop: >-
+    {{
+      (docker_host_info.networks | default({})).keys() | list
+      | difference(all_required_networks)
+      | intersect(managed_networks)
+    }}
+  when:
+    - item not in protected_docker_networks

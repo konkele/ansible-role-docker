@@ -1,0 +1,32 @@
+---
+- name: Render Docker tooling stack template
+  template:
+    src: tooling_stack.yaml.j2
+    dest: "{{ docker_tooling_dir }}/docker_tooling.yaml"
+    owner: "{{ docker_tooling_user }}"
+    group: "{{ docker_tooling_group }}"
+    mode: '0660'
+
+- name: Deploy enabled Docker services
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_tooling_dir }}"
+    files: docker_tooling.yaml
+    state: present
+
+- name: Identify disabled services
+  set_fact:
+    disabled_services: >-
+      {{
+        docker_services | dict2items
+        | selectattr('value.enabled','equalto',false)
+        | map(attribute='key')
+        | list
+      }}
+
+- name: Remove disabled services from stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_tooling_dir }}"
+    files: docker_tooling.yaml
+    state: absent
+    services: "{{ disabled_services }}"
+  when: disabled_services | length > 0

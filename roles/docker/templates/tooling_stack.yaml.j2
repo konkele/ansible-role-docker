@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+{% for name, service in docker_services.items() if service.enabled %}
+  {{ name }}:
+    image: "{{ service.image }}"
+    container_name: "{{ service.container_name | default(name) }}"
+    restart: "{{ service.restart | default('unless-stopped') }}"
+{% if service.networks is defined and service.networks %}
+    networks:
+{% for net in service.networks %}
+      - {{ net }}
+{% endfor %}
+{% endif %}
+{% if service.ports is defined and service.ports %}
+    ports:
+{% for port in service.ports %}
+      - "{{ port }}"
+{% endfor %}
+{% endif %}
+{% if service.volumes is defined and service.volumes %}
+    volumes:
+{% for vol in service.volumes %}
+      - "{{ vol }}"
+{% endfor %}
+{% endif %}
+{% if service.environment is defined and service.environment %}
+    environment:
+{% for key, val in service.environment.items() %}
+      {{ key }}: "{{ val }}"
+{% endfor %}
+{% endif %}
+{% if service.secrets is defined and service.secrets %}
+    secrets:
+{% for sec in service.secrets %}
+      - {{ sec }}
+{% endfor %}
+{% endif %}
+{% if service.labels is defined and service.labels %}
+    labels:
+{% for key, val in service.labels.items() %}
+      {{ key }}: "{{ val }}"
+{% endfor %}
+{% endif %}
+{% if service.command is defined and service.command %}
+{% if service.command is string %}
+    command: "{{ service.command }}"
+{% else %}
+    command:
+{% for cmd in service.command %}
+      - {{ cmd }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if service.extra_hosts is defined and service.extra_hosts %}
+    extra_hosts:
+{% for host in service.extra_hosts %}
+      - {{ host }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+networks:
+{% for name, network in docker_networks.items() %}
+  {{ name }}:
+{% if network.external is defined %}
+    external: {{ network.external | lower }}
+{% endif %}
+{% endfor %}
+
+secrets:
+{% for name, secret in docker_secrets.items() %}
+  {{ name }}:
+    file: "{{ docker_tooling_dir }}/secrets/{{ name }}"
+{% endfor %}
+

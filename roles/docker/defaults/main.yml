@@ -1,0 +1,76 @@
+---
+# Docker tooling directory
+docker_tooling_dir: /opt/docker/tooling
+docker_tooling_user: root
+docker_tooling_group: docker
+docker_tooling_mode: '0770'
+
+# Docker networks
+docker_networks:
+  proxy:
+    external: true
+
+# Secrets
+# Values must be supplied via host_vars or inventory
+docker_secrets:
+  acme_dns_cloudflare_api_token:
+    enabled: false
+    var: acme_dns_cloudflare_api_token
+
+# Docker services
+docker_services:
+  traefik:
+    enabled: false
+    image: traefik:latest
+    container_name: traefik
+    networks:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      TZ: UTC
+      CF_DNS_API_TOKEN_FILE: /run/secrets/acme_dns_cloudflare_api_token
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "{{ docker_tooling_dir }}/traefik/letsencrypt:/letsencrypt"
+    secrets: []
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    labels: {}
+    extra_hosts: []
+
+  portainer:
+    enabled: false
+    image: portainer/portainer-ce:lts
+    container_name: portainer
+    networks:
+      - default
+    ports:
+      - "9000:9000"
+    volumes:
+      - "{{ docker_tooling_dir }}/portainer/data:/data"
+    command: []
+    environment: {}
+    labels: {}
+    secrets: []
+
+  portainer_agent:
+    enabled: false
+    image: portainer/agent:lts
+    container_name: portainer_agent
+    networks:
+      - default
+    ports:
+      - "9001:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+      - /:/host
+    environment: {}
+    labels: {}
+    secrets: []

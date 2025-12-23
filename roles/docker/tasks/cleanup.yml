@@ -1,0 +1,7 @@
+---
+- name: Remove tooling directory if no services are enabled
+  file:
+    path: "{{ docker_tooling_dir }}"
+    state: absent
+  when: docker_services | dict2items | selectattr('value.enabled','equalto',true) | list | length == 0
+  ignore_errors: yes
