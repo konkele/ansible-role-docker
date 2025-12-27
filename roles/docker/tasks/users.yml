@@ -1,35 +1,40 @@
-
 ---
-- name: Add users tagged 'docker' to the docker group
-  user:
-    name: "{{ item.name }}"
-    groups: docker
-    append: yes
-  loop: "{{ (merged_common_users | default([])) | selectattr('tags','defined') | selectattr('tags','contains','docker') | list }}"
-  loop_control:
-    label: "{{ item.name }}"
+- name: Load common user metadata from remote host
+  slurp:
+    src: /etc/ansible/common_users.yml
+  register: common_users_file
 
-- name: Get current members of the docker group
-  command: getent group docker
-  register: docker_group
-  changed_when: false
+- name: Parse remote YAML into a variable
+  set_fact:
+    common_users_metadata: "{{ common_users_file.content | b64decode | from_yaml }}"
 
-- name: Remove users no longer tagged 'docker' from docker group
+- name: Validate common_users metadata structure
+  assert:
+    that:
+      - common_users_metadata.common_users is defined
+      - common_users_metadata.common_users is iterable
+    fail_msg: "/etc/ansible/common_users.yml must define a top-level 'common_users' list."
+
+- name: Prepare docker users for upstream
+  set_fact:
+    upstream_docker_users: >-
+      {{
+        common_users_metadata.common_users
+        | selectattr('tags', 'defined')
+        | selectattr('tags', 'contains', 'docker')
+        | map(attribute='name')
+        | list
+      }}
+
+- name: Ensure docker group exists
+  group:
+    name: docker
+    state: present
+
+- name: Add tagged users to docker group
   user:
     name: "{{ item }}"
-    groups: "{{ (ansible_facts.getent_passwd[item].groups | default([])) | difference(['docker']) | join(',') }}"
-    append: no
-  loop: >-
-    {{
-      (docker_group.stdout.split(':')[-1].split(',') | reject('equalto','') | list)
-      | difference(
-          (merged_common_users | default([]))
-          | selectattr('tags','defined')
-          | selectattr('tags','contains','docker')
-          | map(attribute='name')
-          | list
-        )
-    }}
-  when: docker_group.stdout != ''
-  loop_control:
-    label: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ upstream_docker_users }}"
+  when: upstream_docker_users | length > 0

@@ -1,21 +1,12 @@
 ---
-- import_tasks: install.yml
-  tags: docker:install
-  
-- import_tasks: prepare.yml
-  tags: docker:prepare
+- name: Install docker & prerequisites
+  import_tasks: install.yml
+  tags:
+    - docker
+    - docker_install
 
-- import_tasks: secrets.yml
-  tags: docker:secrets
-
-- import_tasks: network.yml
-  tags: docker:network
-
-- import_tasks: stack.yml
-  tags: docker:stack
-
-- import_tasks: users.yml
-  tags: docker:users
-
-- import_tasks: cleanup.yml
-  tags: docker:cleanup
+- name: Add users to docker gruop
+  import_tasks: users.yml
+  tags:
+    - docker
+    - docker_users

@@ -1,9 +1,0 @@
----
-- name: Ensure tooling directory exists if any service enabled
-  file:
-    path: "{{ docker_tooling_dir }}"
-    state: directory
-    owner: "{{ docker_tooling_user }}"
-    group: "{{ docker_tooling_group }}"
-    mode: "{{ docker_tooling_mode }}"
-  when: docker_services | dict2items | selectattr('value.enabled','equalto',true) | list | length > 0
