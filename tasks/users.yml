@@ -9,10 +9,12 @@
     common_users_metadata: "{{ common_users_file.content | b64decode | from_yaml }}"
 
 - name: Validate common_users metadata structure
-  assert:
+  ansible.builtin.assert:
     that:
       - common_users_metadata.common_users is defined
-      - common_users_metadata.common_users is iterable
+      - common_users_metadata.common_users is sequence
+      - common_users_metadata.common_users is not string
+      - common_users_metadata.common_users is not mapping
     fail_msg: "/etc/ansible/common_users.yml must define a top-level 'common_users' list."
 
 - name: Prepare docker users for upstream
@@ -31,7 +33,7 @@
     name: docker
     state: present
 
-- name: Add tagged users to docker group
+- name: Add users to docker group
   user:
     name: "{{ item }}"
     groups: docker
