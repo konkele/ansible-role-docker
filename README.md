@@ -22,7 +22,7 @@ The **`docker` role** automates the installation and configuration of Docker on 
 ## Requirements
 
 * Supported platforms: Ubuntu, Debian, and other Debian-based distributions
-* Ansible 2.9+
+* Ansible 2.15+
 * Access to `/etc/ansible/common_users.yml` on target hosts
 
 ---
