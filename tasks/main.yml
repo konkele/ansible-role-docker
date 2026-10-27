@@ -2,11 +2,9 @@
 - name: Install docker & prerequisites
   import_tasks: install.yml
   tags:
-    - docker
     - docker_install
 
 - name: Add users to docker gruop
   import_tasks: users.yml
   tags:
-    - docker
     - docker_users
