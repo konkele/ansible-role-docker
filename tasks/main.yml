@@ -1,0 +1,18 @@
+---
+- name: Configure Docker repository
+  become: true
+  ansible.builtin.import_tasks: repository.yml
+  tags:
+    - docker_repository
+
+- name: Install Docker
+  become: true
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - docker_install
+
+- name: Configure Docker service
+  become: true
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - docker_service

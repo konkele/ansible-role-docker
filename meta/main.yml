@@ -1,0 +1,33 @@
+---
+galaxy_info:
+  role_name: docker
+  namespace: konkele
+  author: Eric Konkel
+
+  description: >-
+    Installs and manages Docker Engine on Debian and Ubuntu
+    systems, including repository configuration,
+    package installation, and service management.
+
+  license: MIT
+
+  min_ansible_version: "2.16"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+        - resolute
+
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+  galaxy_tags:
+    - docker
+    - containers
+    - compose
+    - infrastructure
+
+dependencies: []

@@ -1,0 +1,17 @@
+---
+docker_prerequisites:
+  - ca-certificates
+  - python3-debian
+  - python3-pip
+  - python3-jsondiff
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+  - python3-docker
+
+docker_service_enabled: true
+docker_service_state: started

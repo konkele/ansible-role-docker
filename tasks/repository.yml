@@ -1,0 +1,32 @@
+---
+- name: Validate supported distribution
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution in ['Ubuntu', 'Debian']
+    fail_msg: >-
+      Unsupported distribution:
+      {{ ansible_facts.distribution }}.
+      This role supports Debian and Ubuntu only.
+
+- name: Install repository prerequisites
+  ansible.builtin.apt:
+    name: "{{ docker_prerequisites }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Configure Docker repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    uris:
+      - "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}"
+    suites:
+      - "{{ ansible_facts.distribution_release }}"
+    components:
+      - stable
+    architectures:
+      - amd64
+    signed_by: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
+    state: present
